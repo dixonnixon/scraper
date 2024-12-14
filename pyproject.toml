@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "crawl"
+version = "0.1.0"
+description = ""
+authors = ["Andrii"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+httpx = {extras = ["http2"], version = "^0.27.2"}
+brotli = "^1.1.0"
+google-maps-places = "^0.1.17"
+googlemaps = "^4.10.0"
+python-dotenv = "^1.0.1"
+flask = {extras = ["markup"], version = "^3.0.3"}
+markupsafe = "^2.1.5"
+flask-wtf = "^1.2.1"
+flask-login = "^0.6.3"
+werkzeug = "^3.0.4"
+flask-googlemaps = "^0.4.1"
+connexion = {extras = ["swagger-ui"], version = "^3.1.0"}
+dataforseo-client = "^1.0.38"
+
+
+psutil = "^6.1.0"
+loguru = "^0.7.3"
+bs4 = "^0.0.2"
+requests = "^2.32.3"
+certifi = "^2024.8.30"
+proxy-py = "^2.4.9"
+cloudscraper = "^1.2.71"
+streamlit = "^1.41.0"
+selenium = "^4.27.1"
+html5lib = "^1.1"
+langchain = "^0.3.11"
+webdriver-manager = "^4.0.2"
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+cli = "wsgi:script"
+
