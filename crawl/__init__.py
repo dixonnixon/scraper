@@ -4,7 +4,7 @@ from datetime import datetime
 from loguru import logger
 from util.size import get_size
 #from crawl.seo import start
-from crawl.check import check_website
+#from crawl.check import check_website
 
 def main():
     logger.info(system_boot_time())

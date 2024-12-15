@@ -16,4 +16,6 @@ class Config:
     USER = environ.get("D4S_USER")
     PASS = environ.get("D4S_KEY")
     DRV_CHROME = environ.get("SBR_WEBDRIVER")
+    WS_KEY= environ.get("WS_KEY")
+        
 settings = Config()

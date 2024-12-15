@@ -10,9 +10,32 @@ from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnecti
 from bs4 import BeautifulSoup
 from os import environ, path
 
+import requests
+from random import choice
+
+
 from crawl.driver import create_instance, singleton
 
 print(settings.DRV_CHROME)
+
+
+import cloudscraper
+
+def get_proxies():
+    print(settings.WS_KEY)
+    response = requests.get(
+                "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=25",
+                 headers={ "Authorization": f"Token {settings.WS_KEY}" }
+            )
+    fetched = response.json()
+    return fetched['results']
+#          {'id': 'd-15982962554', 'username': 'vhywotkf', 'password': 'wqhwhowlp0zx', 'proxy_address': '167.160.180.203', 'port': 6754, 
+#           'valid': True, 'last_verification': '2024-12-15T11:45:28.374501-08:00', 'country_code': 'US', 'city_name': 'Los Angeles', 
+#           'asn_name': 'Asn-Quadranet-Global', 'asn_number': 8100, 'high_country_confidence': True, 'created_at': '2024-07-12T08:07:13.049836-07:>
+
+def get_random_proxy(proxies):
+    keys = ['username', 'password', 'proxy_address', 'port']
+    return [choice(proxies)[key] for key in keys]
 
 @singleton
 class Runner():
@@ -25,15 +48,25 @@ class Runner():
         options.add_argument('--no-sandbox')  # Bypass sandbox mode (for non-standard environments)
 
         if proxy:
+            proxies = get_proxies()
+#           random_proxy = get_random_proxy(proxies)
+
+#           print(choice(fetch['results']), choice(fetch['results']).items())
+#           keys = ['username', 'password', 'proxy_address', 'port']
+            #user, password, proxy_address, port = [choice(fetch['results'])[key] for key in keys]
+            user, password, proxy_address, port = get_random_proxy(proxies)
+
             # Define custom options for the Selenium driver
-            options = Options()
-            proxy_server_url = f"http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}"
+            # options = Options()
+            proxy_server_url = f"http://{user}:{password}@{proxy_address}:{port}"
             options.add_argument(f'--proxy-server={proxy_server_url}')
 
             # Create the ChromeDriver instance with custom options 
             driver = webdriver.Chrome(
-            service=ChromeService(ChromeDriverManager().install()),
-                options=options
+#            service=Service(ChromeDriverManager().install()),
+            service=Service(settings.DRV_CHROME),
+ 
+               options=options
             )
             self._driver = driver
             return None
@@ -56,54 +89,45 @@ class Runner():
 
 def scrape_website(website):
     print("Connecting to Scraping Browser...")
-    '''sbr_connection = ChromiumRemoteConnection(settings.DRV_CHROME, "goog", "chrome")
-    with Remote(sbr_connection, options=ChromeOptions()) as driver:
-        driver.get(website)
-        print("Waiting captcha to solve...")
-        solve_res = driver.execute(
-            "executeCdpCommand",
-            {
-                "cmd": "Captcha.waitForSolve",
-                "params": {"detectTimeout": 10000},
-            },
-        )
-        print("Captcha solve status:", solve_res["value"]["status"])
-        print("Navigated! Scraping page content...")
-        html = driver.page_source
-        time.sleep(10)
-        
-        return html
-    '''
-    creator = create_instance("crawl.scrape.Runner")
-    driver = create_instance("crawl.scrape.Runner").driver
-    #instance1 = create_instance("crawl.scrape.Runner")
-    #instance2 = create_instance("crawl.scrape.Runner")
+    creator = create_instance("crawl.scrape.Runner", proxy=True)
+    driver = create_instance("crawl.scrape.Runner", proxy=True).driver
 
-    print(creator.driver is driver)
-    #print(instance1 is instance2)
+    scraper = cloudscraper.create_scraper(
+    browser={
+        "browser": "chrome",
+        "platform": "windows",
+        },
+    )
 
 
+    print(driver, creator.driver is driver, "Current session is {}".format(driver.session_id),  driver.get_log('driver'))
     try:
-        driver.get(website)
+
+        #driver.get(website)
         print("Page loaded...")
-        html = driver.page_source.encode("utf-8")
-        print(html)
-        print(creator.wait_for_page_load())
-#        driver.quit()
-        #if creator.wait_for_page_load():
-        return html
-        #else:
-        #    return "Page not loaded or js disabled"
+        #html = driver.page_source.encode("utf-8")
+        #print(html)
+        #print(creator.wait_for_page_load())
+        response = scraper.get(website)
+        print(f"The status code is {response.status_code}")
+        #print("\n\n\n\n", response.text.encode("utf-8"))
+        #return html
+ 
+        return response.text
     except Exception as e:
-        print(e)
+        print("Error occured: ", e)
+        raise Exception(e)
     finally:
-         driver.close()
+         print("Current session is {}".format(driver.session_id))
+    #    driver.close()
     #    driver.quit()        
 
 
 
 
 def extract_body_content(html_content):
+    #create_instance("crawl.scrape.Runner").driver.quit()
+
     soup = BeautifulSoup(html_content, "html.parser")
     body_content = soup.body
     if body_content:

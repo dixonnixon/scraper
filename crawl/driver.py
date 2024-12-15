@@ -15,7 +15,7 @@ def singleton(cls):
     instances = {}
  
     def wrapper(*args, **kwargs):
-        print(cls, instances)
+        #print(cls, instances)
         if cls not in instances:
             instances[cls] = cls(*args, **kwargs)
         return instances[cls]
