@@ -1,5 +1,7 @@
 from config import settings
 
+from streamlit import cache_data
+
 import selenium.webdriver as webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -20,22 +22,49 @@ print(settings.DRV_CHROME)
 
 
 import cloudscraper
+from cloudscraper.exceptions import (
+    CloudflareLoopProtection,
+    CloudflareIUAMError,
+    CloudflareCaptchaError,
+    CloudflareCaptchaProvider,
+    CaptchaParameter
+)
 
+@cache_data
 def get_proxies():
-    print(settings.WS_KEY)
     response = requests.get(
                 "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=25",
                  headers={ "Authorization": f"Token {settings.WS_KEY}" }
-            )
-    fetched = response.json()
-    return fetched['results']
-#          {'id': 'd-15982962554', 'username': 'vhywotkf', 'password': 'wqhwhowlp0zx', 'proxy_address': '167.160.180.203', 'port': 6754, 
-#           'valid': True, 'last_verification': '2024-12-15T11:45:28.374501-08:00', 'country_code': 'US', 'city_name': 'Los Angeles', 
-#           'asn_name': 'Asn-Quadranet-Global', 'asn_number': 8100, 'high_country_confidence': True, 'created_at': '2024-07-12T08:07:13.049836-07:>
+    )
+    return response.json()["results"]
 
-def get_random_proxy(proxies):
+
+
+def extract_one(proxy):
+    lables = ['IP','port','Country']
+    keys = ['proxy_address','port', 'country_code']
+    values = [ str(proxy[key]) for key in keys]
+    pairs = [f"{key}:{value}" for key, value in zip(lables, values)]
+    result = " ".join(pairs)
+    return result
+
+
+def get_random_proxy(proxies, option=None):
     keys = ['username', 'password', 'proxy_address', 'port']
+    if option:
+        return [proxies[option][key] for key in keys]
     return [choice(proxies)[key] for key in keys]
+
+def get_proxy_url(option=None):
+    proxies = get_proxies()
+    if not option:
+        user, password, proxy_address, port = get_random_proxy(proxies)
+    else:
+        user, password, proxy_address, port = get_random_proxy(proxies, option=option)
+
+    return f"http://{user}:{password}@{proxy_address}:{port}"
+
+
 
 @singleton
 class Runner():
@@ -48,17 +77,8 @@ class Runner():
         options.add_argument('--no-sandbox')  # Bypass sandbox mode (for non-standard environments)
 
         if proxy:
-            proxies = get_proxies()
-#           random_proxy = get_random_proxy(proxies)
+            proxy_server_url = get_proxy_url(proxy["option"])
 
-#           print(choice(fetch['results']), choice(fetch['results']).items())
-#           keys = ['username', 'password', 'proxy_address', 'port']
-            #user, password, proxy_address, port = [choice(fetch['results'])[key] for key in keys]
-            user, password, proxy_address, port = get_random_proxy(proxies)
-
-            # Define custom options for the Selenium driver
-            # options = Options()
-            proxy_server_url = f"http://{user}:{password}@{proxy_address}:{port}"
             options.add_argument(f'--proxy-server={proxy_server_url}')
 
             # Create the ChromeDriver instance with custom options 
@@ -87,17 +107,39 @@ class Runner():
         return self._driver.quit
 
 
-def scrape_website(website):
+def scrape_website(website, proxy=None):
     print("Connecting to Scraping Browser...")
-    creator = create_instance("crawl.scrape.Runner", proxy=True)
-    driver = create_instance("crawl.scrape.Runner", proxy=True).driver
+    proxy_cs = None
 
-    scraper = cloudscraper.create_scraper(
+    creator = create_instance("crawl.scrape.Runner", proxy=proxy)
+    driver = create_instance("crawl.scrape.Runner", proxy=proxy).driver
+
+    scraper = cloudscraper.create_scraper(debug=False,
     browser={
         "browser": "chrome",
         "platform": "windows",
         },
-    )
+    interpreter='js2py')
+
+    print(proxy)
+    #:TODO change approach of passing proxy
+    if str(proxy["option"]) and proxy["option"] is not None:
+        if proxy["option"] > -1:
+            print(get_proxy_url(proxy["option"]))
+
+
+
+            proxy_cs = {
+                "http": get_proxy_url(proxy["option"]),
+                "https": get_proxy_url(proxy["option"]),
+            }
+
+            try:
+                tokens, user_agent = cloudscraper.get_tokens(website, proxies=proxy_cs)
+                print("Tokens", tokens, user_agent, proxy_cs)
+
+            except CloudflareIUAMError as e:
+                print("No cloudflare on the site") 
 
 
     print(driver, creator.driver is driver, "Current session is {}".format(driver.session_id),  driver.get_log('driver'))
@@ -108,7 +150,7 @@ def scrape_website(website):
         #html = driver.page_source.encode("utf-8")
         #print(html)
         #print(creator.wait_for_page_load())
-        response = scraper.get(website)
+        response = scraper.get(website, proxies=proxy_cs)
         print(f"The status code is {response.status_code}")
         #print("\n\n\n\n", response.text.encode("utf-8"))
         #return html
