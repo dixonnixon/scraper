@@ -2,6 +2,7 @@
 
 from os import environ, path
 from os.path import exists
+import os
 
 from dotenv import load_dotenv
 
@@ -28,6 +29,7 @@ class Config(object):
     WS_KEY= environ.get("WS_KEY")
 
     def __init__(self):
+        print(os.environ)
         for attr_name in dir(self):
             if not attr_name.startswith('_'):  # Avoid private attributes
                 attr_value = getattr(self, attr_name)
