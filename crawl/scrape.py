@@ -32,10 +32,15 @@ from cloudscraper.exceptions import (
 
 @cache_data
 def get_proxies():
-    response = requests.get(
-                "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=25",
-                 headers={ "Authorization": f"Token {settings.WS_KEY}" }
-    )
+    try:
+        response = requests.get(
+                    "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=25",
+                    headers={ "Authorization": f"Token {settings.WS_KEY}" }
+        )
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        raise SystemExit(err)
+
     return response.json()["results"]
 
 
