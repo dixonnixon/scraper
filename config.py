@@ -33,7 +33,7 @@ class Config(object):
                 attr_value = getattr(self, attr_name)
                 if attr_value == None:
                     import streamlit as st
-                    
+                    print("sec", st.secrets)
                 print(f"{attr_name}: {attr_value}")
         pass
         
