@@ -1,6 +1,8 @@
 import streamlit as st
 from crawl.scrape import *
 
+from config import settings
+
 def create_options(list):
    return { value: key for  key,value in enumerate(list) }
 

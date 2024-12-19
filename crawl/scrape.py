@@ -116,8 +116,8 @@ def scrape_website(website, proxy=None):
     print("Connecting to Scraping Browser...")
     proxy_cs = None
 
-    creator = create_instance("crawl.scrape.Runner", proxy=proxy)
-    driver = create_instance("crawl.scrape.Runner", proxy=proxy).driver
+    #creator = create_instance("crawl.scrape.Runner", proxy=proxy)
+    #driver = create_instance("crawl.scrape.Runner", proxy=proxy).driver
 
     scraper = cloudscraper.create_scraper(debug=False,
     browser={
@@ -132,8 +132,6 @@ def scrape_website(website, proxy=None):
         if proxy["option"] > -1:
             print(get_proxy_url(proxy["option"]))
 
-
-
             proxy_cs = {
                 "http": get_proxy_url(proxy["option"]),
                 "https": get_proxy_url(proxy["option"]),
@@ -147,7 +145,7 @@ def scrape_website(website, proxy=None):
                 print("No cloudflare on the site") 
 
 
-    print(driver, creator.driver is driver, "Current session is {}".format(driver.session_id),  driver.get_log('driver'))
+    # print(driver, creator.driver is driver, "Current session is {}".format(driver.session_id),  driver.get_log('driver'))
     try:
 
         #driver.get(website)
@@ -164,8 +162,8 @@ def scrape_website(website, proxy=None):
     except Exception as e:
         print("Error occured: ", e)
         raise Exception(e)
-    finally:
-         print("Current session is {}".format(driver.session_id))
+    # finally:
+        #  print("Current session is {}".format(driver.session_id))
     #    driver.close()
     #    driver.quit()        
 

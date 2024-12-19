@@ -9,11 +9,12 @@ basedir = path.abspath(path.dirname(__file__))
 env_path = path.join(basedir, ".env")
 load_dotenv(env_path)
 
-st.secrets
 
-if not exists(env_path):
-    raise Exception(".env is absent")
-
+# if not exists(env_path):
+#     #raise Exception(".env is absent")
+#     print(".env is absent")
+#     import streamlit as st
+    
 
 print(path.join(basedir, ".env"))
 
@@ -27,8 +28,13 @@ class Config(object):
     WS_KEY= environ.get("WS_KEY")
 
     def __init__(self):
-        print(self, vars(self).items())
-        for name, value in vars(self).items():
-            print(f"  {name}: {value}")
+        for attr_name in dir(self):
+            if not attr_name.startswith('_'):  # Avoid private attributes
+                attr_value = getattr(self, attr_name)
+                if attr_value == None:
+                    import streamlit as st
+                    
+                print(f"{attr_name}: {attr_value}")
+        pass
         
 settings = Config()
