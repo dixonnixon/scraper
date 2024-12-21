@@ -1,6 +1,6 @@
 from config import settings
 
-from streamlit import cache_data
+from streamlit import cache_data, secrets
 
 import selenium.webdriver as webdriver
 from selenium.webdriver.chrome.service import Service
@@ -18,7 +18,7 @@ from random import choice
 
 from crawl.driver import create_instance, singleton
 
-print(settings.DRV_CHROME)
+#print(settings.DRV_CHROME)
 
 
 import cloudscraper
@@ -39,7 +39,13 @@ def get_proxies():
         )
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
-       print(err.args[0])
+       if err.response.status_code == 401:
+           print("Webshare Auth failed: Authentication failed. Status 401")
+           raise Exception(err)
+       else:
+           print("Error getting Proxies: ", err.args[0])
+    print(response,  response.status_code)
+    
     return response.json()["results"]
 
 
@@ -100,7 +106,7 @@ class Runner():
             return None
 
 
-        self._driver = webdriver.Chrome(service=Service(settings.DRV_CHROME), options=options)
+        self._driver = webdriver.Chrome(service=Service(settings.SBR_WEBDRIVER), options=options)
     
 
     def wait_for_page_load(self):
