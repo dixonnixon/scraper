@@ -13,6 +13,10 @@ selenium = "^4.27.1"
 webdriver-manager = "^4.0.2"
 pyyaml = "^6.0.2"
 cloudscraper = "^1.2.71"
+uuid = "^1.30"
+fake-useragent = "^2.0.3"
+langchain-ollama = "^0.2.2"
+playwright = "^1.49.1"
 
 
 [build-system]
