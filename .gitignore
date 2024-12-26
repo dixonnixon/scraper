@@ -1,2 +1,6 @@
 .streamlit/
 __pycache__/
+.env
+*.swp
+**/*.swp
+chromedriver
